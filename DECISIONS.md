@@ -151,3 +151,24 @@ Every choice made while building this project, with the reason behind it. New de
 - **Date:** 2026-10-22 · **By:** User (create the repo) / Claude (what's included) · **Where:** `.gitignore`, `git@github.com:HudsonPifer1217/DeepLearningProject.git`
 - **Decision:** `Project1/` is its own git repository, separate from the home-folder repo it sits inside. The repo includes the notebooks, `.py` files, md files, `figures/`, `results/` and `data/splits.csv`. It excludes `data/ptb-xl/` (the 1.6 GB raw data and its caches), `.venv/` and Python caches.
 - **Why:** PhysioNet already hosts the raw data, and `Checkpoint1_PTBXL.ipynb` re-downloads it. `splits.csv` (about 0.4 MB) is committed so Paco's CNN trains and tests on exactly the same recordings. The prediction files (about 7 MB) are committed so `03_evaluation.ipynb` runs without retraining the baselines.
+
+### D23: Every notebook runs on Colab from a clone of this repo
+- **Date:** 2026-10-23 · **By:** Paco / Claude · **Where:** first code cell of each notebook, `fetch_ptbxl` in `common.py`
+- **Decision:** Each notebook starts with a cell that, on Colab only, clones this repo into `/content/DeepLearningProject` and works from inside it. Locally the cell does nothing. `fetch_ptbxl` downloads single PTB-XL files on demand, so `02` and `03` fetch only the two label CSVs (plus one record for the example-error plot) instead of the full 1.6 GB.
+- **Why:** The instructor runs the notebooks on Colab, where every notebook starts on a fresh machine without the repo, the `.py` modules or the data. Before this, only `Checkpoint1_PTBXL.ipynb` could run there, and it saved to `/content/ptb-xl`, a path the other notebooks never read.
+
+### D24: The hand-made feature table is committed as `data/handcrafted_features.parquet`
+- **Date:** 2026-10-23 · **By:** Paco / Claude · **Supersedes:** the cache location `data/ptb-xl/handcrafted_features.parquet` (part of D22)
+- **Decision:** Move the feature cache out of the ignored raw-data folder and commit it (about 7 MB).
+- **Why:** Rebuilding it needs the full download plus feature extraction over 21,799 recordings. With it committed, `02_baselines.ipynb` runs on Colab in about a minute. Checked: retraining the 12-lead trees on this file reproduces the saved black-box AUROC (0.927).
+
+### D25: Checkpoint 2 additions to `02_baselines.ipynb`
+- **Date:** 2026-10-23 · **By:** Paco / Claude
+- **Decision:** Added (1) a preprocessing-pipeline table, including what changed since Checkpoint 1, (2) the `X` and `y` shapes per split and lead set, and (3) train vs black-box AUROC for every model, to check for over- and underfitting.
+- **Why:** The Checkpoint 2 brief asks for each of these directly. None of them changes a model, so the baselines stay frozen (D20).
+
+### D26: The tree baselines vary slightly across machines; the committed predictions are the reference
+- **Date:** 2026-10-23 · **By:** Paco / Claude
+- **Finding:** With the pinned packages and identical features, logistic regression reproduces Hudson's predictions exactly on Windows, but `HistGradientBoostingClassifier` does not: its results depend on the CPU and threading. Re-running `02_baselines.ipynb` on Windows moved test AUROC by at most 0.0003, sensitivity by at most 0.5 points and per-category recall by at most about 1 point. Black-box AUROC for the B and C trees showed as 0.905 / 0.846 instead of 0.904 / 0.845. No conclusion changes.
+- **Decision:** The prediction files in `results/` from Hudson's run stay the frozen reference (D20), and every reported number comes from them through `03_evaluation.ipynb`, which is deterministic. Re-running `02` (on Colab, say) overwrites them locally with near-identical predictions; don't commit those.
+- **Also:** The feature table was rebuilt with the pinned packages before being committed (D24). An older copy built with different package versions differed in 34 of about 1.6 million values, enough to change a few predictions.

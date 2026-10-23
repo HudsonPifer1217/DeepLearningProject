@@ -40,7 +40,7 @@
 - [x] Extract the hand-made baseline features (76 / 40 / 10 per recording)
 
 **Cleanup left over from Checkpoint 1**
-- [ ] Fix the "fot" typo in cell 11
+- [x] Fix the "fot" typo in cell 11
 - [ ] Compute the cell 10 numbers (58% abnormal, 2,111 repeat patients) in code instead of typing them in
 - [x] Save the shared loading code (labels, splits, `LEAD_SETS`) as `common.py`, so every notebook loads the data the same way. *(The waveform loading and `mu`/`sd` will be added in Phase 3.)*
 

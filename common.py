@@ -1,9 +1,11 @@
 """Shared data definitions so every notebook builds labels and splits the same way."""
-import os, ast
+import os, ast, time
 import numpy as np
 import pandas as pd
+import requests
 
 DATA_DIR = os.path.join("data", "ptb-xl")
+BASE_URL = "https://physionet-open.s3.amazonaws.com/ptb-xl/1.0.3/"
 SPLIT_FILE = os.path.join("data", "splits.csv")
 RESULTS_DIR = "results"
 
@@ -14,9 +16,32 @@ LEAD_SETS = {"A_12lead": LEADS, "B_limb": LEADS[:6], "C_leadI": ["I"]}
 CONFIGS = list(LEAD_SETS)
 
 
+def fetch_ptbxl(rel_paths, data_dir=DATA_DIR, retries=5):
+    """Download individual PTB-XL files (paths relative to the dataset root) that aren't on disk yet.
+    Lets a fresh Colab runtime get just the label CSVs or a single record without the full 1.6 GB."""
+    for rel in rel_paths:
+        dest = os.path.join(data_dir, rel)
+        if os.path.exists(dest) and os.path.getsize(dest) > 0:
+            continue
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        for attempt in range(retries):
+            try:
+                r = requests.get(BASE_URL + rel, timeout=(10, 30))
+                r.raise_for_status()
+                with open(dest + ".part", "wb") as fh:
+                    fh.write(r.content)
+                os.replace(dest + ".part", dest)
+                break
+            except Exception:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(2 ** attempt)
+
+
 def load_labels(data_dir=DATA_DIR):
     """One row per usable recording (indexed by ecg_id): patient_id, filename_lr, scp_codes,
     the 5 superclass columns, `abnormal`, and `split` (from data/splits.csv)."""
+    fetch_ptbxl(["ptbxl_database.csv", "scp_statements.csv"], data_dir)
     db = pd.read_csv(os.path.join(data_dir, "ptbxl_database.csv"), index_col="ecg_id")
     db["scp_codes"] = db["scp_codes"].apply(ast.literal_eval)
     scp = pd.read_csv(os.path.join(data_dir, "scp_statements.csv"), index_col=0)
