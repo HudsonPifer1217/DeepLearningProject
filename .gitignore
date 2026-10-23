@@ -1,0 +1,11 @@
+# environment
+.venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# raw PTB-XL download and caches (1.6 GB; re-download with Checkpoint1_PTBXL.ipynb)
+data/ptb-xl/
+# the split is small and must be shared so every model uses the same recordings
+!data/splits.csv

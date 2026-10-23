@@ -1,0 +1,23 @@
+{
+  "logreg_A_12lead": {
+    "C": 0.1
+  },
+  "gbt_A_12lead": {
+    "learning_rate": 0.05,
+    "max_depth": null
+  },
+  "logreg_B_limb": {
+    "C": 0.1
+  },
+  "gbt_B_limb": {
+    "learning_rate": 0.05,
+    "max_depth": 3
+  },
+  "logreg_C_leadI": {
+    "C": 10
+  },
+  "gbt_C_leadI": {
+    "learning_rate": 0.05,
+    "max_depth": 3
+  }
+}
